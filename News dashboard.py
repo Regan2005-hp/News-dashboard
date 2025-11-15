@@ -1,70 +1,44 @@
 import streamlit as st
-from gnews import GNews
+import feedparser
 
-# Set page config
-st.set_page_config(page_title="Live Sector News", page_icon="📰")
+st.set_page_config(page_title="Live News - 5 Sectors", layout="wide")
 
-# Use custom CSS for light green background
-st.markdown(
-    """
+st.markdown("""
+    <h2 style='color:black;'>Live News From 5 Sectors (Times of India)</h2>
+""", unsafe_allow_html=True)
+
+# --- Light Green Background CSS ---
+st.markdown("""
     <style>
-    .stApp {
-        background-color: #e8f5e9;  /* light green */
-    }
-    .sector-title {
-        font-size: 24px;
-        font-weight: bold;
-        margin-top: 20px;
-    }
-    .news-item {
-        margin-bottom: 10px;
-    }
+        .news-box {
+            background-color: #ccffcc;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
-st.title("📊 Live News by Sector")
-
-# Initialize GNews
-gn = GNews(language='en', country='US')
-
-# Define your sectors and corresponding Google News topics or queries
-sectors = {
-    "Business": "BUSINESS",
-    "Technology": "TECHNOLOGY",
-    "Health": "HEALTH",
-    "Sports": "SPORTS",
-    "Entertainment": "ENTERTAINMENT",
+# --- Times of India RSS Feeds (Public) ---
+RSS_FEEDS = {
+    "Business": "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms",
+    "Sports": "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms",
+    "Technology": "https://timesofindia.indiatimes.com/rssfeeds/66949542.cms",
+    "Entertainment": "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
+    "World": "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms"
 }
 
-# For each sector, fetch top news
-for sector_name, topic in sectors.items():
-    st.markdown(f"<div class='sector-title'>{sector_name}</div>", unsafe_allow_html=True)
-    try:
-        articles = gn.get_news(topic)  # returns a list of news dicts
-    except Exception as e:
-        st.error(f"Error getting {sector_name} news: {e}")
-        continue
+# --- Display each sector ---
+for sector, url in RSS_FEEDS.items():
+    st.subheader(f"🟢 {sector} News")
+    feed = feedparser.parse(url)
 
-    # Display top 5 articles for each
-    for article in articles[:5]:
-        # article keys: "title", "publisher", "published date", "url", "description"
-        title = article.get("title")
-        source = article.get("publisher")
-        date = article.get("published date")
-        link = article.get("url")
-        desc = article.get("description")
-
-        st.markdown(
-            f"""
-            <div class="news-item">
-            <a href="{link}" target="_blank"><strong>{title}</strong></a><br>
-            <small>{source} — {date}</small><br>
-            <p>{desc}</p>
+    for entry in feed.entries[:5]:  # Show top 5 headlines per sector
+        st.markdown(f"""
+            <div class="news-box">
+                <h4>{entry.title}</h4>
+                <a href="{entry.link}" target="_blank">Read more</a>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        """, unsafe_allow_html=True)
 
-    st.markdown("---")
+    st.write("---")
