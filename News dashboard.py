@@ -1,66 +1,70 @@
 import streamlit as st
-import requests
+from gnews import GNews
 
-# ---------------------------
-# PAGE CONFIG + BACKGROUND
-# ---------------------------
-st.set_page_config(page_title="Live Sector News", layout="wide")
+# Set page config
+st.set_page_config(page_title="Live Sector News", page_icon="📰")
 
-page_bg = """
-<style>
-body {
-    background-color: #e6ffe6; /* light green */
-}
-</style>
-"""
-st.markdown(page_bg, unsafe_allow_html=True)
-
-st.title("📰 Live News from 5 Sectors")
-st.write("Automatically updates each time you refresh!")
-
-# ---------------------------
-# NEWS API FUNCTION
-# ---------------------------
-API_KEY = "YOUR_API_KEY"
-BASE_URL = "https://newsapi.org/v2/top-headlines"
-
-def get_news(category):
-    params = {
-        "category": category,
-        "language": "en",
-        "apiKey": API_KEY
+# Use custom CSS for light green background
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background-color: #e8f5e9;  /* light green */
     }
-    response = requests.get(BASE_URL, params=params)
-    data = response.json()
-    return data.get("articles", [])
+    .sector-title {
+        font-size: 24px;
+        font-weight: bold;
+        margin-top: 20px;
+    }
+    .news-item {
+        margin-bottom: 10px;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-# ---------------------------
-# SECTORS
-# ---------------------------
+st.title("📊 Live News by Sector")
+
+# Initialize GNews
+gn = GNews(language='en', country='US')
+
+# Define your sectors and corresponding Google News topics or queries
 sectors = {
-    "Technology": "technology",
-    "Finance": "business",
-    "Sports": "sports",
-    "Health": "health",
-    "Entertainment": "entertainment"
+    "Business": "BUSINESS",
+    "Technology": "TECHNOLOGY",
+    "Health": "HEALTH",
+    "Sports": "SPORTS",
+    "Entertainment": "ENTERTAINMENT",
 }
 
-# ---------------------------
-# DISPLAY NEWS
-# ---------------------------
-for sector_title, api_name in sectors.items():
-    st.subheader(f"📌 {sector_title} News")
-
-    articles = get_news(api_name)
-
-    if not articles:
-        st.write("No news available at the moment.")
+# For each sector, fetch top news
+for sector_name, topic in sectors.items():
+    st.markdown(f"<div class='sector-title'>{sector_name}</div>", unsafe_allow_html=True)
+    try:
+        articles = gn.get_news(topic)  # returns a list of news dicts
+    except Exception as e:
+        st.error(f"Error getting {sector_name} news: {e}")
         continue
 
-    for article in articles[:5]:  # 5 top headlines per sector
-        st.markdown(f"### 🔸 {article['title']}")
-        if article.get("description"):
-            st.write(article["description"])
-        if article.get("url"):
-            st.markdown(f"[Read more]({article['url']})")
-        st.write("---")
+    # Display top 5 articles for each
+    for article in articles[:5]:
+        # article keys: "title", "publisher", "published date", "url", "description"
+        title = article.get("title")
+        source = article.get("publisher")
+        date = article.get("published date")
+        link = article.get("url")
+        desc = article.get("description")
+
+        st.markdown(
+            f"""
+            <div class="news-item">
+            <a href="{link}" target="_blank"><strong>{title}</strong></a><br>
+            <small>{source} — {date}</small><br>
+            <p>{desc}</p>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    st.markdown("---")
