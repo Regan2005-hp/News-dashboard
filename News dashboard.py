@@ -51,7 +51,6 @@ placeholder = st.empty()
 while True:
     with placeholder.container():
 
-        for entry in feed.entries[:6]:      # Show top 6 news
             image = entry.media_thumbnail[0]['url'] if "media_thumbnail" in entry else ""
 
             st.markdown(f"""
